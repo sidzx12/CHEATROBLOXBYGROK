@@ -604,4 +604,229 @@ local function Toggle(parent, text, default, cb)
     btn.BackgroundColor3 = default and Color3.fromRGB(95, 55, 175) or Color3.fromRGB(48, 46, 58)
     btn.Text = ""
     btn.Parent = f
-    local bc
+    local bc = Instance.new("UICorner")
+    bc.CornerRadius = UDim.new(1, 0)
+    bc.Parent = btn
+
+    local circle = Instance.new("Frame")
+    circle.Size = UDim2.new(0, 14, 0, 14)
+    circle.Position = default and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
+    circle.BackgroundColor3 = Color3.white
+    circle.Parent = btn
+    local cc = Instance.new("UICorner")
+    cc.CornerRadius = UDim.new(1, 0)
+    cc.Parent = circle
+
+    local on = default
+    btn.MouseButton1Click:Connect(function()
+        on = not on
+        TweenService:Create(btn, TweenInfo.new(0.12), {
+            BackgroundColor3 = on and Color3.fromRGB(95, 55, 175) or Color3.fromRGB(48, 46, 58)
+        }):Play()
+        TweenService:Create(circle, TweenInfo.new(0.12), {
+            Position = on and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
+        }):Play()
+        cb(on)
+    end)
+end
+
+local function Slider(parent, text, min, max, default, cb)
+    local f = Instance.new("Frame")
+    f.Size = UDim2.new(1, -6, 0, 52)
+    f.BackgroundColor3 = Color3.fromRGB(26, 24, 36)
+    f.Parent = parent
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 7)
+    c.Parent = f
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -16, 0, 20)
+    lbl.Position = UDim2.new(0, 10, 0, 4)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text .. ": " .. default
+    lbl.TextColor3 = Color3.fromRGB(220, 210, 235)
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextSize = 12
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = f
+
+    local bar = Instance.new("Frame")
+    bar.Size = UDim2.new(1, -20, 0, 5)
+    bar.Position = UDim2.new(0, 10, 0, 32)
+    bar.BackgroundColor3 = Color3.fromRGB(40, 38, 52)
+    bar.Parent = f
+    local bc = Instance.new("UICorner")
+    bc.CornerRadius = UDim.new(1, 0)
+    bc.Parent = bar
+
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new((default-min)/(max-min), 0, 1, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(115, 70, 195)
+    fill.Parent = bar
+    local fc = Instance.new("UICorner")
+    fc.CornerRadius = UDim.new(1, 0)
+    fc.Parent = fill
+
+    local holding = false
+    bar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            holding = true
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            holding = false
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if holding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local rel = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+            local val = math.floor(min + (max - min) * rel)
+            fill.Size = UDim2.new(rel, 0, 1, 0)
+            lbl.Text = text .. ": " .. val
+            cb(val)
+        end
+    end)
+end
+
+local function Btn(parent, text, cb)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(1, -6, 0, 32)
+    b.BackgroundColor3 = Color3.fromRGB(70, 45, 130)
+    b.Text = text
+    b.TextColor3 = Color3.white
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 12
+    b.Parent = parent
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 7)
+    c.Parent = b
+    b.MouseButton1Click:Connect(cb)
+end
+
+local function TextBox(parent, placeholder, cb)
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(1, -6, 0, 32)
+    box.BackgroundColor3 = Color3.fromRGB(26, 24, 36)
+    box.PlaceholderText = placeholder
+    box.Text = ""
+    box.TextColor3 = Color3.fromRGB(220, 210, 235)
+    box.PlaceholderColor3 = Color3.fromRGB(120, 110, 140)
+    box.Font = Enum.Font.Gotham
+    box.TextSize = 12
+    box.ClearTextOnFocus = false
+    box.Parent = parent
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 7)
+    c.Parent = box
+    box.FocusLost:Connect(function(enter)
+        if enter and box.Text \~= "" then cb(box.Text) end
+    end)
+end
+
+-- Pages
+local Combat = MakeTab("Combat", 12)
+local Move = MakeTab("Movement", 52)
+local Visual = MakeTab("Visuals", 92)
+local Misc = MakeTab("Misc", 132)
+
+-- Combat
+Toggle(Combat, "Aimbot (Head)", false, function(v) Config.Aimbot = v end)
+Toggle(Combat, "AimFire (Spam Shot)", false, function(v) Config.AimFire = v end)
+Toggle(Combat, "AimKill (Auto in FOV)", false, function(v) Config.AimKill = v end)
+Toggle(Combat, "AimSilent (Hold Shoot)", false, function(v) Config.AimSilent = v end)
+Toggle(Combat, "AutoKill", false, function(v) Config.AutoKill = v end)
+Slider(Combat, "FOV Size", 40, 400, 140, function(v) Config.FOV = v end)
+Toggle(Combat, "Show FOV Circle", true, function(v) Config.FOVVisible = v end)
+Toggle(Combat, "Team Check", true, function(v) Config.TeamCheck = v end)
+
+-- Movement
+Toggle(Move, "Fly", false, function(v) SetFly(v) end)
+Slider(Move, "Fly Speed", 20, 200, 60, function(v) Config.FlySpeed = v end)
+Toggle(Move, "Jump Boost", false, function(v) Config.Jump = v ApplyMovement() end)
+Slider(Move, "Jump Power", 50, 500, 80, function(v) Config.JumpPower = v ApplyMovement() end)
+Toggle(Move, "Run Boost", false, function(v) Config.Run = v ApplyMovement() end)
+Slider(Move, "Run Speed", 16, 150, 28, function(v) Config.RunSpeed = v ApplyMovement() end)
+
+-- Visuals
+Toggle(Visual, "ESP (Enemies)", false, function(v) Config.ESP = v RefreshESP() end)
+Toggle(Visual, "Chams (Team)", false, function(v) Config.Chams = v ApplyChams() end)
+
+local function ColorRow(parent, label, isESP)
+    local f = Instance.new("Frame")
+    f.Size = UDim2.new(1, -6, 0, 34)
+    f.BackgroundColor3 = Color3.fromRGB(26, 24, 36)
+    f.Parent = parent
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 7)
+    c.Parent = f
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0.35, 0, 1, 0)
+    lbl.Position = UDim2.new(0, 10, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = label
+    lbl.TextColor3 = Color3.fromRGB(220, 210, 235)
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextSize = 12
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = f
+
+    local cols = {
+        Color3.fromRGB(255, 60, 60),
+        Color3.fromRGB(60, 255, 100),
+        Color3.fromRGB(60, 140, 255),
+        Color3.fromRGB(255, 220, 50),
+        Color3.fromRGB(200, 90, 255),
+    }
+    for i, col in ipairs(cols) do
+        local b = Instance.new("TextButton")
+        b.Size = UDim2.new(0, 24, 0, 20)
+        b.Position = UDim2.new(0, 130 + (i-1)*30, 0.5, -10)
+        b.BackgroundColor3 = col
+        b.Text = ""
+        b.Parent = f
+        local bc = Instance.new("UICorner")
+        bc.CornerRadius = UDim.new(0, 5)
+        bc.Parent = b
+        b.MouseButton1Click:Connect(function()
+            if isESP then
+                Config.ESPColor = col
+                RefreshESP()
+            else
+                Config.ChamsColor = col
+                ApplyChams()
+            end
+        end)
+    end
+end
+
+ColorRow(Visual, "ESP Color", true)
+ColorRow(Visual, "Chams Color", false)
+
+-- Misc
+TextBox(Misc, "TP Username or x,y,z", function(t) TeleportTo(t) end)
+Btn(Misc, "Teleport to Mouse", function()
+    local char = SafeCharacter()
+    if char and char:FindFirstChild("HumanoidRootPart") and Mouse.Hit then
+        char.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 4, 0))
+    end
+end)
+
+-- Open first tab
+Pages["Combat"].btn.BackgroundColor3 = Color3.fromRGB(85, 50, 150)
+Pages["Combat"].btn.TextColor3 = Color3.white
+Pages["Combat"].page.Visible = true
+
+-- Create FOV
+CreateFOV()
+
+-- Toggle UI
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == Enum.KeyCode.RightShift or input.KeyCode == Enum.KeyCode.F4 then
+        Main.Visible = not Main.Visible
+    end
+end)
+
+print("[s¡dzx̌12] Loaded | RightShift / F4 = Toggle UI")
